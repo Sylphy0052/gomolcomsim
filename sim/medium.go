@@ -6,9 +6,7 @@ import (
 
 type Grid map[Position][]Object
 
-func createGrid() Grid {
-	return make(map[Position][]Object)
-}
+func createGrid() Grid { return make(map[Position][]Object) }
 
 func (g Grid) addObject(o Object, p Position) {
 	if g[p] == nil {
@@ -59,7 +57,8 @@ func (g *Grid) setFloatPosition(o Object, fp FloatPosition) {
 
 type Object interface {
 	getName() string
-	receiveMol(g *Grid, mc *MolController)
+	receiveMol(m Molecule, mc *MolController, sim *Sim)
+	getVolume() float64
 }
 
 type Medium struct {
@@ -67,6 +66,4 @@ type Medium struct {
 	grid    Grid
 }
 
-func createMedium() Medium {
-	return Medium{grid: createGrid()}
-}
+func createMedium() Medium { return Medium{grid: createGrid()} }

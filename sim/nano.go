@@ -11,20 +11,12 @@ type NanoMachine struct {
 	molReleasePosition Position
 	molParam           MoleculeParam
 	name               string
+	currentId          int
 }
 
-func (n NanoMachine) getName() string {
-	return n.name
-}
+func (n NanoMachine) getName() string { return n.name }
 
-// func (n NanoMachine) doNextStep() {
-// 	switch n.getName() {
-// 	case "transmitter":
-//
-// 	case "receiver":
-//
-// 	}
-// }
+func (n NanoMachine) getVolume() float64 { return float64(0.0) }
 
 func printGrid(g *Grid) {
 	for k, v := range *g {
@@ -35,29 +27,39 @@ func printGrid(g *Grid) {
 	}
 }
 
-func (n NanoMachine) receiveMol(g *Grid, mc *MolController) {
-	switch n.getName() {
-	case "receiver":
-		fmt.Println("receive INFO mol")
-		n.createAckMolecule(mc, g, 1)
-	case "transmitter":
-		fmt.Println("receive ACK mol")
+func (n *NanoMachine) receiveMol(m Molecule, mc *MolController, sim *Sim) {
+	if m.msgId == n.currentId {
+		switch n.getName() {
+		case "receiver":
+			fmt.Println("receive INFO mol")
+			n.createAckMolecule(mc, &sim.medium.grid)
+			n.currentId += 1
+
+		case "transmitter":
+			fmt.Println("receive ACK mol")
+			if n.currentId == sim.config.numMessages {
+				sim.isFinish = true
+			} else {
+				n.currentId += 1
+				n.createInfoMolecule(mc, &sim.medium.grid)
+			}
+		}
 	}
 }
 
-func (n NanoMachine) createInfoMolecule(mc *MolController, g *Grid, msgId int) {
+func (n NanoMachine) createInfoMolecule(mc *MolController, g *Grid) {
 	num := n.molParam.num
 	for i := 0; i < num; i++ {
-		m := createMolecule(n, n.molParam, msgId, "INFO")
+		m := createMolecule(n, n.molParam, n.currentId, "INFO")
 		g.addObject(m, n.molReleasePosition)
 		mc.addMol(m)
 	}
 }
 
-func (n NanoMachine) createAckMolecule(molecules *MolController, g *Grid, msgId int) {
+func (n NanoMachine) createAckMolecule(molecules *MolController, g *Grid) {
 	num := n.molParam.num
 	for i := 0; i < num; i++ {
-		m := createMolecule(n, n.molParam, msgId, "ACK")
+		m := createMolecule(n, n.molParam, n.currentId, "ACK")
 		g.addObject(m, n.molReleasePosition)
 		molecules.addMol(m)
 	}
@@ -70,6 +72,7 @@ func createNanoMachine(g Grid, tParam NanoMachineParam, molParam MoleculeParam, 
 		molReleasePosition: tParam.molReleasePosition,
 		molParam:           molParam,
 		name:               name,
+		currentId:          1,
 	}
 	startX := tParam.center.x - tParam.radius + 1
 	endX := tParam.center.x + tParam.radius - 1
@@ -81,7 +84,7 @@ func createNanoMachine(g Grid, tParam NanoMachineParam, molParam MoleculeParam, 
 	for i := startX; i <= endX; i++ {
 		for j := startY; j <= endY; j++ {
 			for k := startZ; k <= endZ; k++ {
-				g.addObject(tx, Position{x: i, y: j, z: k})
+				g.addObject(&tx, Position{x: i, y: j, z: k})
 			}
 		}
 	}
@@ -95,13 +98,11 @@ type Microtubule struct {
 	name          string
 }
 
-func (m Microtubule) getName() string {
-	return m.name
-}
+func (m Microtubule) getName() string { return m.name }
 
-func (m Microtubule) receiveMol(g *Grid, mc *MolController) {
+func (m Microtubule) receiveMol(mol Molecule, mc *MolController, sim *Sim) {}
 
-}
+func (m Microtubule) getVolume() float64 { return float64(0.0) }
 
 func (m Microtubule) setGrid(sim *Sim) {
 	vel := float64(sim.config.velRail)

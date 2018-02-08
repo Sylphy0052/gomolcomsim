@@ -72,8 +72,8 @@ stepLengthZ 1.0
 ** moleculeParams require the number of molecules to be released each time, the type of molecule (INFO|ACK|NOISE), the movement type for
 ** non-noise molecules (PASSIVE|ACTIVE), and an optional, adaptive change number.  Adaptive change changes num mols to send out based on
 ** comm success/failure.
-moleculeParams 1 INFO PASSIVE 0 1.0
-moleculeParams 1 ACK PASSIVE 0 1.0
+moleculeParams 100 INFO PASSIVE 0 1.0
+moleculeParams 100 ACK PASSIVE 0 1.0
 moleculeParams 0 NOISE 1.0
 
 *********Below parameters are for active propagation
@@ -88,7 +88,7 @@ probDRail 0.5
 ***** useCollisions determines whether or not collisions can occur.  If so, all molecule types can collide with each other when one would
 ***** move into the space occupied by another.  If not, no molecules can collide and they may occuppy the same space simultaneously.
 ***** Note: molecules are represented as 1x1x1 cubes.
-useCollisions 0
+useCollisions 1
 useAcknowledgements 1
 decomposing 0
 

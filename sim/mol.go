@@ -11,9 +11,7 @@ type MolController struct {
 	mediumLength Position
 }
 
-func (mc *MolController) addMol(m Molecule) {
-	mc.molecules = append(mc.molecules, m)
-}
+func (mc *MolController) addMol(m Molecule) { mc.molecules = append(mc.molecules, m) }
 
 func (mc *MolController) removeMol(m Molecule) {
 	mols := []Molecule{}
@@ -40,14 +38,15 @@ func (mc *MolController) doNextStep(g *Grid) {
 	mc.molecules = mols
 }
 
-func checkReceive(m Molecule, objects []Object, g *Grid, mc *MolController, sim *Sim) {
+func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
+	g := &sim.medium.grid
 	switch m.moleculeType {
 	case INFO:
 		for _, v := range objects {
 			if v.getName() == "receiver" {
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
-				v.receiveMol(g, mc)
+				v.receiveMol(m, mc, sim)
 			}
 		}
 	case ACK:
@@ -55,38 +54,52 @@ func checkReceive(m Molecule, objects []Object, g *Grid, mc *MolController, sim 
 			if v.getName() == "transmitter" {
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
-				v.receiveMol(g, mc)
-				sim.isFinish = true
+				v.receiveMol(m, mc, sim)
 			}
 		}
 	}
 }
 
-func checkCollision(m Molecule) {
+func (mc *MolController) movePrev(m Molecule, g *Grid) {
+	g.removeObject(m, m.position)
+	m.movePrev()
+	g.addObject(m, m.position)
+}
 
+func checkCollision(m Molecule, mc *MolController, sim *Sim) {
+	currentPos := m.position
+	g := sim.medium.grid
+	vSum := float64(0.0)
+	for _, v := range g[currentPos] {
+		switch v.getName() {
+		case "INFO", "ACK", "NOISE":
+			vSum += v.getVolume()
+		}
+
+		if vSum == 0.0 {
+			return
+		}
+
+		vIn := m.getVolume()
+		p := vSum + vIn/(1.0-vSum)
+
+		// 衝突
+		if vSum >= 1.0 || rand.Float64() < (1.0-p) {
+			mc.movePrev(m, &sim.medium.grid)
+		}
+	}
 }
 
 func (mc *MolController) checkCollision(sim *Sim) {
 	for _, m := range mc.molecules {
 		currentGrid := sim.medium.grid
 		currentObjects := currentGrid[m.position]
-		checkReceive(m, currentObjects, &sim.medium.grid, mc, sim)
+		checkReceive(m, currentObjects, mc, sim)
 		if sim.config.useCollisions {
-			checkCollision(m)
+			checkCollision(m, mc, sim)
 		}
 	}
 }
-
-// func (mc *MolController) checkCollision(g *Grid, config Config) {
-// 	for _, m := range mc.molecules {
-// 		currentGrid := *g
-// 		currentObjects := currentGrid[m.position]
-// 		checkReceive(m, currentObjects, g, mc)
-// 		if config.useCollisions {
-// 			checkCollision(m)
-// 		}
-// 	}
-// }
 
 type Molecule struct {
 	position       Position
@@ -102,13 +115,11 @@ type Molecule struct {
 	volume         float64
 }
 
-func (m Molecule) getName() string {
-	return m.name
-}
+func (m Molecule) getName() string { return m.name }
 
-func (m Molecule) receiveMol(g *Grid, mc *MolController) {
+func (m Molecule) receiveMol(mol Molecule, mc *MolController, sim *Sim) {}
 
-}
+func (m Molecule) getVolume() float64 { return m.volume }
 
 func getNextPosition(m Molecule, stepLength FloatPosition) Position {
 	currentPosition := m.position
@@ -142,6 +153,10 @@ func (m *Molecule) move(stepLength FloatPosition, mediumLength Position) {
 		nextPosition.z = mediumLength.z / 2
 	}
 	m.position = nextPosition
+}
+
+func (m *Molecule) movePrev() {
+	m.position, m.prevPosition = m.prevPosition, m.position
 }
 
 func createMolecule(n NanoMachine, param MoleculeParam, msgId int, name string) Molecule {

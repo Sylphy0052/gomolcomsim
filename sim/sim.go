@@ -46,7 +46,7 @@ func (sim *Sim) createNanoMachines() {
 
 	// transmitter
 	tx := createNanoMachine(sim.medium.grid, sim.config.transmitter, infoParam, "transmitter")
-	tx.createInfoMolecule(&sim.molController, &sim.medium.grid, 1)
+	tx.createInfoMolecule(&sim.molController, &sim.medium.grid)
 	sim.transmitter = tx
 
 	// receiver
