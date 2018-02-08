@@ -6,9 +6,9 @@
 **********Please enter below the appropriate value of # in x,y,z direction *********************
 ***** No object can be placed outside of the diensions of the medium, and no object can move outside of these dimensions.
 
-mediumDimensionX 150
-mediumDimensionY 150
-mediumDimensionZ 150
+mediumDimensionX 120
+mediumDimensionY 120
+mediumDimensionZ 120
 
 ***** Specify the length of simulation ************
 ***** maxSimulationStep # means, the simulation will end at that step, unless it completed all the messages specified to be used
@@ -65,9 +65,9 @@ retransmitWaitTime 1000
 ***** stepLength (independent for each direction) represents the maximum amount a molecule using diffusive motion can travel in one step.
 ***** Actual amount of travel will vary randomly, for each direction, between -stepLength and +stepLength.
 ***** Must be ints.
-stepLengthX 1
-stepLengthY 1
-stepLengthZ 1
+stepLengthX 1.0
+stepLengthY 1.0
+stepLengthZ 1.0
 
 ** moleculeParams require the number of molecules to be released each time, the type of molecule (INFO|ACK|NOISE), the movement type for
 ** non-noise molecules (PASSIVE|ACTIVE), and an optional, adaptive change number.  Adaptive change changes num mols to send out based on
@@ -102,7 +102,7 @@ decomposing 0
 ***** release position, but with end point at least 3 units from the Rx's molecule release position (but sitll within the volume of the Rx.
 ***** The other with start point at the Rx's molecule release position, but with end point at least 3 units from the Tx's release position
 ***** (but still within the volume of the Tx).
-microtubuleParams (-15, 0, 0) (15, 0, 0)
+**microtubuleParams (-15, 0, 0) (15, 0, 0)
 **microtubuleParams (15, 3, 3) (-15, 0, 0)
 
 ***** Name of the file to output results to.

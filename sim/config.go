@@ -2,6 +2,7 @@ package sim
 
 import (
 	"bufio"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -49,8 +50,35 @@ func getMovementType(s string) MovementType {
 	return val
 }
 
+type FloatPosition struct {
+	x, y, z float64
+}
+
+func (fp FloatPosition) getPosition() (float64, float64, float64) {
+	return fp.x, fp.y, fp.z
+}
+
+func (fp *FloatPosition) add(p FloatPosition) {
+	fp.x, fp.y, fp.z = FloatPosition{x: fp.x + p.x, y: fp.y + p.y, z: fp.z + p.z}.getPosition()
+}
+
+func round(f float64) float64 {
+	return math.Floor(f + .5)
+}
+
+func (fp FloatPosition) toPosition() Position {
+	x := int(round(fp.x))
+	y := int(round(fp.y))
+	z := int(round(fp.z))
+	return Position{x: x, y: y, z: z}
+}
+
 type Position struct {
 	x, y, z int
+}
+
+func (p Position) getPosition() (int, int, int) {
+	return p.x, p.y, p.z
 }
 
 func createPosition(s string) Position {
@@ -68,10 +96,6 @@ type NanoMachineParam struct {
 	center             Position
 	radius             int
 	molReleasePosition Position
-}
-
-func (nmp NanoMachineParam) getPosition() Position {
-	return nmp.center
 }
 
 func createNanoMachineParam(args []string) NanoMachineParam {
@@ -123,6 +147,7 @@ func createMoleculeParam(args []string) MoleculeParam {
 type MicrotubuleParam struct {
 	startPosition Position
 	endPosition   Position
+	velRail       int
 }
 
 func createMicrotubuleParam(args []string) MicrotubuleParam {
@@ -167,10 +192,10 @@ type Config struct {
 	pwait               bool
 }
 
-func createConfig(configFilename string, pwait bool) *Config {
+func createConfig(configFilename string, pwait bool) Config {
 	config := Config{configFilename: "./dat/" + configFilename, pwait: pwait}
 	config.readDat()
-	return &config
+	return config
 }
 
 func (c *Config) readDat() {
