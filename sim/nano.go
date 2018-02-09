@@ -31,14 +31,15 @@ func (n *NanoMachine) receiveMol(m Molecule, mc *MolController, sim *Sim) {
 	if m.msgId == n.currentId {
 		switch n.getName() {
 		case "receiver":
-			fmt.Println("receive INFO mol")
+			// fmt.Println("receive INFO mol")
 			n.createAckMolecule(mc, &sim.medium.grid)
 			n.currentId += 1
 
 		case "transmitter":
-			fmt.Println("receive ACK mol")
+			// fmt.Println("receive ACK mol")
 			if n.currentId == sim.config.numMessages {
 				sim.isFinish = true
+				sim.finishStep = sim.simStep
 			} else {
 				n.currentId += 1
 				n.createInfoMolecule(mc, &sim.medium.grid)
@@ -56,12 +57,12 @@ func (n NanoMachine) createInfoMolecule(mc *MolController, g *Grid) {
 	}
 }
 
-func (n NanoMachine) createAckMolecule(molecules *MolController, g *Grid) {
+func (n NanoMachine) createAckMolecule(mc *MolController, g *Grid) {
 	num := n.molParam.num
 	for i := 0; i < num; i++ {
 		m := createMolecule(n, n.molParam, n.currentId, "ACK")
 		g.addObject(m, n.molReleasePosition)
-		molecules.addMol(m)
+		mc.addMol(m)
 	}
 }
 

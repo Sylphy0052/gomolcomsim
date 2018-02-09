@@ -193,7 +193,7 @@ type Config struct {
 }
 
 func createConfig(configFilename string, pwait bool) Config {
-	config := Config{configFilename: "./dat/" + configFilename, pwait: pwait}
+	config := Config{configFilename: configFilename, pwait: pwait}
 	config.readDat()
 	return config
 }

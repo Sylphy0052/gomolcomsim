@@ -2,8 +2,8 @@ package sim
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
+	"log"
+	"os"
 )
 
 type Sim struct {
@@ -15,6 +15,7 @@ type Sim struct {
 	receiver      NanoMachine
 	molController MolController
 	isFinish      bool
+	finishStep    int
 }
 
 func (sim *Sim) createMedium() {
@@ -57,7 +58,6 @@ func (sim *Sim) createNanoMachines() {
 }
 
 func (sim *Sim) createMolController() {
-	rand.Seed(time.Now().UnixNano())
 	sim.molController = MolController{
 		molecules: make([]Molecule, 0),
 		stepLength: FloatPosition{
@@ -82,7 +82,6 @@ func (sim *Sim) doNextStep() {
 	sim.molController.doNextStep(&sim.medium.grid)
 
 	// 衝突
-	// sim.molController.checkCollision(&sim.medium.grid, sim.config)
 	sim.molController.checkCollision(sim)
 }
 
@@ -95,12 +94,31 @@ func initSim(filename string, ptime bool) Sim {
 	return sim
 }
 
+func writeResult(filename string, str string) {
+	writeFileName := "./result/" + filename
+	file, err := os.OpenFile(writeFileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	fmt.Fprintln(file, str)
+}
+
 func Run(filename string, ptime bool) {
 	sim := initSim(filename, ptime)
 	for ; ; sim.simStep++ {
 		sim.doNextStep()
-		if sim.isFinish {
+		// fmt.Println(len(sim.molController.molecules))
+
+		if sim.simStep%100000 == 0 {
 			fmt.Println(sim.simStep)
+		}
+
+		if sim.isFinish && !ptime {
+			writeResult(sim.config.outputFile, fmt.Sprint(sim.simStep))
+			break
+		} else if ptime && sim.isFinish && len(sim.molController.molecules) == 0 {
+			writeResult(sim.config.outputFile, fmt.Sprint(sim.simStep)+","+fmt.Sprint(sim.finishStep))
 			break
 		}
 	}

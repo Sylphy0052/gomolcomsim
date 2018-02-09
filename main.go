@@ -16,7 +16,7 @@ func searchDat() {
 	ptime := true
 
 	for _, v := range filename {
-		sim.Run(v.Name(), ptime)
+		sim.Run(datRoot+v.Name(), ptime)
 	}
 }
 

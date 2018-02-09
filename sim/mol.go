@@ -1,8 +1,11 @@
 package sim
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
+	"sync"
+	"time"
 )
 
 type MolController struct {
@@ -27,13 +30,53 @@ func (mc *MolController) removeMol(m Molecule) {
 	mc.molecules = mols
 }
 
+// func (mc *MolController) doNextStep(g *Grid) {
+// 	mols := []Molecule{}
+// 	for _, m := range mc.molecules {
+// 		g.removeObject(m, m.position)
+// 		m.move(mc.stepLength, mc.mediumLength)
+// 		mols = append(mols, m)
+// 		g.addObject(m, m.position)
+// 	}
+// 	mc.molecules = mols
+// }
+
+// func (mc *MolController) doNextStep(g *Grid) {
+// 	mols := []Molecule{}
+// 	// var mutex = sync.Mutex{}
+// 	done := make(chan bool)
+// 	for _, m := range mc.molecules {
+// 		g.removeObject(m, m.position)
+// 		go func() {
+// 			m.move(mc.stepLength, mc.mediumLength)
+// 			done <- true
+// 		}()
+// 		mols = append(mols, m)
+// 		g.addObject(m, m.position)
+// 	}
+// 	for i := 0; i < len(mc.molecules); i++ {
+// 		<-done
+// 	}
+// 	mc.molecules = mols
+// }
+
 func (mc *MolController) doNextStep(g *Grid) {
 	mols := []Molecule{}
+	done := make(chan bool)
+	var mutex = sync.Mutex{}
 	for _, m := range mc.molecules {
-		g.removeObject(m, m.position)
-		m.move(mc.stepLength, mc.mediumLength)
-		mols = append(mols, m)
-		g.addObject(m, m.position)
+		go func() {
+			mutex.Lock()
+			g.removeObject(m, m.position)
+			m.move(mc.stepLength, mc.mediumLength)
+			mols = append(mols, m)
+			g.addObject(m, m.position)
+			mutex.Unlock()
+			done <- true
+		}()
+	}
+	for i := 0; i < len(mc.molecules); i++ {
+		<-done
 	}
 	mc.molecules = mols
 }
@@ -44,6 +87,7 @@ func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
 	case INFO:
 		for _, v := range objects {
 			if v.getName() == "receiver" {
+				fmt.Println("A", sim.simStep, len(sim.molController.molecules))
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
 				v.receiveMol(m, mc, sim)
@@ -52,6 +96,7 @@ func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
 	case ACK:
 		for _, v := range objects {
 			if v.getName() == "transmitter" {
+				fmt.Println("B", sim.simStep, len(sim.molController.molecules))
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
 				v.receiveMol(m, mc, sim)
@@ -122,6 +167,7 @@ func (m Molecule) receiveMol(mol Molecule, mc *MolController, sim *Sim) {}
 func (m Molecule) getVolume() float64 { return m.volume }
 
 func getNextPosition(m Molecule, stepLength FloatPosition) Position {
+	rand.Seed(time.Now().UnixNano())
 	currentPosition := m.position
 	nextX := currentPosition.x + int(round(rand.Float64()*stepLength.x*2-stepLength.x))
 	nextY := currentPosition.y + int(round(rand.Float64()*stepLength.y*2-stepLength.y))
