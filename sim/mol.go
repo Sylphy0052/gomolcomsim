@@ -1,10 +1,8 @@
 package sim
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -41,45 +39,50 @@ func (mc *MolController) removeMol(m Molecule) {
 // 	mc.molecules = mols
 // }
 
-// func (mc *MolController) doNextStep(g *Grid) {
-// 	mols := []Molecule{}
-// 	// var mutex = sync.Mutex{}
-// 	done := make(chan bool)
-// 	for _, m := range mc.molecules {
-// 		g.removeObject(m, m.position)
-// 		go func() {
-// 			m.move(mc.stepLength, mc.mediumLength)
-// 			done <- true
-// 		}()
-// 		mols = append(mols, m)
-// 		g.addObject(m, m.position)
-// 	}
-// 	for i := 0; i < len(mc.molecules); i++ {
-// 		<-done
-// 	}
-// 	mc.molecules = mols
-// }
-
 func (mc *MolController) doNextStep(g *Grid) {
+	// startTime := time.Now()
 	mols := []Molecule{}
 	done := make(chan bool)
-	var mutex = sync.Mutex{}
 	for _, m := range mc.molecules {
+		g.removeObject(m, m.position)
 		go func() {
-			mutex.Lock()
-			g.removeObject(m, m.position)
 			m.move(mc.stepLength, mc.mediumLength)
-			mols = append(mols, m)
-			g.addObject(m, m.position)
-			mutex.Unlock()
 			done <- true
 		}()
+		mols = append(mols, m)
+		g.addObject(m, m.position)
 	}
 	for i := 0; i < len(mc.molecules); i++ {
 		<-done
 	}
 	mc.molecules = mols
+	// endTime := time.Now()
+	// fmt.Println(endTime.Sub(startTime).Nanoseconds()/1000, "us")
 }
+
+// func (mc *MolController) doNextStep(g *Grid) {
+// 	startTime := time.Now()
+// 	mols := []Molecule{}
+// 	done := make(chan bool)
+// 	var mutex = sync.Mutex{}
+// 	for _, m := range mc.molecules {
+// 		go func() {
+// 			mutex.Lock()
+// 			g.removeObject(m, m.position)
+// 			m.move(mc.stepLength, mc.mediumLength)
+// 			mols = append(mols, m)
+// 			g.addObject(m, m.position)
+// 			mutex.Unlock()
+// 			done <- true
+// 		}()
+// 	}
+// 	for i := 0; i < len(mc.molecules); i++ {
+// 		<-done
+// 	}
+// 	mc.molecules = mols
+// 	endTime := time.Now()
+// 	fmt.Println(endTime.Sub(startTime).Nanoseconds()/1000, "us")
+// }
 
 func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
 	g := &sim.medium.grid
@@ -87,7 +90,6 @@ func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
 	case INFO:
 		for _, v := range objects {
 			if v.getName() == "receiver" {
-				fmt.Println("A", sim.simStep, len(sim.molController.molecules))
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
 				v.receiveMol(m, mc, sim)
@@ -96,7 +98,6 @@ func checkReceive(m Molecule, objects []Object, mc *MolController, sim *Sim) {
 	case ACK:
 		for _, v := range objects {
 			if v.getName() == "transmitter" {
-				fmt.Println("B", sim.simStep, len(sim.molController.molecules))
 				g.removeObject(m, m.position)
 				mc.removeMol(m)
 				v.receiveMol(m, mc, sim)
@@ -129,7 +130,7 @@ func checkCollision(m Molecule, mc *MolController, sim *Sim) {
 		p := vSum + vIn/(1.0-vSum)
 
 		// 衝突
-		if vSum >= 1.0 || rand.Float64() < (1.0-p) {
+		if vSum >= 1.0 || rand.Float64() < p {
 			mc.movePrev(m, &sim.medium.grid)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 type Sim struct {
@@ -106,12 +107,13 @@ func writeResult(filename string, str string) {
 
 func Run(filename string, ptime bool) {
 	sim := initSim(filename, ptime)
+	start := time.Now()
 	for ; ; sim.simStep++ {
 		sim.doNextStep()
-		// fmt.Println(len(sim.molController.molecules))
 
-		if sim.simStep%100000 == 0 {
-			fmt.Println(sim.simStep)
+		if sim.simStep%1000 == 999 {
+			fmt.Println(sim.simStep+1, time.Now().Sub(start).Nanoseconds()/1000000, "ms")
+			start = time.Now()
 		}
 
 		if sim.isFinish && !ptime {

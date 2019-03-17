@@ -6,6 +6,10 @@ import (
 
 type Grid map[Position][]Object
 
+// type Grid struct {
+// 	g = {}
+// }
+
 func createGrid() Grid { return make(map[Position][]Object) }
 
 func (g Grid) addObject(o Object, p Position) {
@@ -16,10 +20,13 @@ func (g Grid) addObject(o Object, p Position) {
 }
 
 func (g Grid) removeObject(o Object, p Position) {
-	newG := []Object{}
+	newG := make([]Object, 0)
 	flg := true
 	for _, v := range g[p] {
-		if v.getName() == o.getName() && flg {
+		if v == nil {
+			continue
+		}
+		if v == o && flg {
 			flg = false
 			continue
 		} else {
